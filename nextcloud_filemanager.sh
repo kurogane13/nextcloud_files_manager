@@ -95,7 +95,7 @@ upload_content() {
         if [[ -f "$share_link_file" ]]; then
             share_link=$(cat "$share_link_file")
             echo
-            echo "This folder already has a download link: $share_link"
+            echo "This folder already has an upload link: $share_link"
         else
             echo
             echo "No share link found in $folder_share"
