@@ -3,8 +3,69 @@
 list_folder_shares() {
     ls -lha
     echo "--------------------------------------------------------------"
-    read -p "Press enter to get back to the main menu: " enter
-    main_menu
+	echo "Files and folders found with details:"
+	echo
+	# Loop through each result
+	results=$(find "$PWD" -type f -o -type d)
+	while IFS= read -r item; do
+		if [ -d "$item" ]; then
+			# Use du -sh for directories to show only the size of the directory itself
+			echo "-------------------------------------------------------------------"
+			echo "Directory: $item"
+			du -sh "$item" | awk '{print $1 " " $2}'
+
+		elif [ -f "$item" ]; then
+			# Use ls -lha for files to show detailed info
+			echo "-------------------------------------------------------------------"
+			echo "File: $item"
+			ls -lha "$item"
+		fi
+	done <<< "$results"
+	echo "--------------------------------------------------------------"
+	read -p "Press enter to get back to the main menu: " enter
+	main_menu
+}
+
+search_files_and_folders() {
+    # Prompt the user for a regular expression
+    echo
+    read -p "Enter the regular expression to search for files and folders: " regexp
+
+    # Search for files and folders matching the regular expression
+    echo
+    echo "Searching for files and folders matching '$regexp' in $PWD..."
+    results=$(find "$PWD" -type f -o -type d | grep -E "$regexp")
+
+    # Check if results were found
+    if [ -z "$results" ]; then
+        echo
+        echo "No files or folders found matching the regular expression '$regexp'."
+        echo
+        echo "--------------------------------------------------------------"
+		read -p "Press enter to get back to the main menu: " enter
+		main_menu
+    else
+        echo "Files and folders found with details:"
+        echo
+        # Loop through each result
+        while IFS= read -r item; do
+            if [ -d "$item" ]; then
+                # Use du -sh for directories to show only the size of the directory itself
+                echo "-------------------------------------------------------------------"
+                echo "Directory: $item"
+                du -sh "$item" | awk '{print $1 " " $2}'
+
+            elif [ -f "$item" ]; then
+                # Use ls -lha for files to show detailed info
+                echo "-------------------------------------------------------------------"
+                echo "File: $item"
+                ls -lha "$item"
+            fi
+        done <<< "$results"
+		echo "--------------------------------------------------------------"
+		read -p "Press enter to get back to the main menu: " enter
+		main_menu
+    fi
 }
 
 share_link() {
@@ -273,22 +334,27 @@ main_menu() {
     while true; do
         clear
         echo "=============================="
+        echo
         echo " Nextcloud Shares File Manager "debug2: channel 0: window 999236 sent adjust 49340
-
+        echo
         echo "=============================="
+        echo
         echo "1. List all folders and files in $PWD"
-        echo "2. Download all content from a Nextcloud share"
-        echo "3. Upload all content to a Nextcloud share"
-        echo "4. Exit"
+        echo "2. Search for files and folders in $PWD"
+        echo "3. Download all content from a Nextcloud share"
+        echo "4. Upload all content to a Nextcloud share"
+        echo "5. Exit"
+        echo
         echo "=============================="
         echo -n "Select an option [1-4]: "
         read -r option
 
         case $option in
             1) list_folder_shares ;;
-            2) download_content ;;
-            3) upload_content ;;
-            4) exit ;;
+            2) search_files_and_folders ;;
+            3) download_content ;;
+            4) upload_content ;;
+            5) exit ;;
             *) echo "Invalid option. Please select a number between 1 and 4." ;;
         esac
     done
