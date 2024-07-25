@@ -149,7 +149,7 @@ upload_content() {
             share_link=$(<"$share_link_file")
         fi
 
-        share_id=$(echo "$share_link" | sed -n 's#https://nc.cloudlinux.com/s/\([^/]*\)$#\1#p')
+        share_id=$(echo "$share_link" | sed -n 's#https://nextcloud_url.com/s/\([^/]*\)$#\1#p')
         echo
         echo "-----------------------------------------------------------------------------------------"
         echo
@@ -163,7 +163,7 @@ upload_content() {
             echo "Compressing $filepath to $temp_zip..."
             zip -j "$temp_zip" "$filepath"
 			
-			corrected_url="https://nc.cloudlinux.com/public.php/webdav/$folder_share/$filename"
+			corrected_url="https://nextcloud_url.com/public.php/webdav/$folder_share/$filename"
             corrected_url2=$(echo "$corrected_url" | sed 's|/webdav//|/webdav/|g')
             # Perform the upload using curl
             echo
@@ -222,7 +222,7 @@ upload_content() {
             share_link=$(<"$share_link_file")
         fi
 
-        share_id=$(echo "$share_link" | sed -n 's#https://nc.cloudlinux.com/s/\([^/]*\)$#\1#p')
+        share_id=$(echo "$share_link" | sed -n 's#https://nextcloud_url.com/s/\([^/]*\)$#\1#p')
         
         echo "-----------------------------------------------------------------------------------------"
         echo
@@ -236,7 +236,7 @@ upload_content() {
             echo "Compressing $folder_share to $temp_zip..."
             zip -r "$temp_zip" "$folder_share"
 
-			corrected_url="https://nc.cloudlinux.com/public.php/webdav/$folder_share/$filename"
+			corrected_url="https://nextcloud_url.com/public.php/webdav/$folder_share/$filename"
             corrected_url2=$(echo "$corrected_url" | sed 's|/webdav//|/webdav/|g')
             # Perform the upload using curl
             echo
