@@ -1,6 +1,6 @@
 #!/bin/bash
 
-nextcloud_url="nextcloud_url"
+nextcloud_url="nextcloud.com"
 
 set_nextcloud_url() {
     echo
@@ -176,11 +176,20 @@ download_content() {
             echo "Listing all files in: $folder_share"
             ls -lha "$folder_share"
             echo "--------------------------------------------------------------"
+            read -p "Press enter to return to the main menu: " enter
+            echo
+
         else
             echo "Unzip failed. The file may be corrupted."
+            read -p "Press enter to return to the main menu: " enter
+            echo
+            main_menu
         fi
     else
         echo "Download failed. Please check the share link or your connection."
+        read -p "Press enter to return to the main menu: " enter
+        echo
+        main_menu
     fi
 	echo
     read -p "Press enter to get back to the main menu: " enter
@@ -207,8 +216,10 @@ upload_content() {
             echo "ERROR: $filepath not found"
             echo
             read -p "Press enter to return to the main menu: "
+            read -p "Press enter to return to the main menu: " enter
             echo
-            upload_content
+            main_menu
+            
         else
             echo
 			echo "Provided $filepath is valid"
@@ -254,9 +265,15 @@ upload_content() {
             if [[ $? -eq 0 ]]; then
                 echo
                 echo "File $filename uploaded successfully."
+                read -p "Press enter to return to the main menu: " enter
+                echo
+                main_menu
             else
                 echo
                 echo "Failed to upload file $filename."
+                read -p "Press enter to return to the main menu: " enter
+                echo
+                main_menu
             fi
 
             # Clean up the temporary zip file
@@ -265,8 +282,9 @@ upload_content() {
             echo
             echo "File $filepath does not exist."
             echo
-            read -p "Press enter to return to the menu: " enter
-            upload_content
+            read -p "Press enter to return to the main menu: " enter
+            echo
+            main_menu
         fi
     elif [[ $choice -eq 2 ]]; then
         # Ask for the full path to the folder
@@ -279,9 +297,9 @@ upload_content() {
             echo
             echo "ERROR: Folder share: $folder_share not found"
             echo
-            read -p "Press enter to return to the main menu: "
+            read -p "Press enter to return to the main menu: " enter
             echo
-            upload_content
+            main_menu
         else
             echo
 			echo "Provided $folder_share is valid"
@@ -327,9 +345,15 @@ upload_content() {
             if [[ $? -eq 0 ]]; then
                 echo
                 echo "Folder $foldername uploaded successfully."
+                read -p "Press enter to return to the main menu: " enter
+				echo
+				main_menu
             else
                 echo
                 echo "Failed to upload folder $foldername."
+                read -p "Press enter to return to the main menu: " enter
+                echo
+                main_menu
             fi
 
             # Clean up the temporary zip file
@@ -338,8 +362,9 @@ upload_content() {
             echo
             echo "Folder $folder_share does not exist."
             echo
-            read -p "Press enter to return to the menu: " enter
-            upload_content
+            read -p "Press enter to return to the main menu: " enter
+            echo
+            main_menu
         fi
     else
         echo
@@ -347,6 +372,7 @@ upload_content() {
     fi
     echo
     read -p "Press Enter to return to the main menu..."
+    main_menu
 }
 
 main_menu() {
