@@ -205,7 +205,7 @@ download_content() {
 
     if [[ $? -eq 0 ]]; then
         echo "--------------------------------------------------------------" >> "$download_log"
-        echo -e "[$start_time] Downloaded content to $zip_file" >> "$download_log"
+        echo -e "[$start_time] Downloaded content from $corrected_url to $zip_file" >> "$download_log"
         ls -lha "$zip_file" >> "$download_log"
         echo -e "Unzipping $zip_file..." >> "$download_log"
         unzip -o "$zip_file" -d "$folder_share"
@@ -590,14 +590,14 @@ view_upload_log() {
     main_menu
 }
 
-# Function to search files and folders
-search_files_and_folders() {
+# Function to search in log files
+search_in_log_files() {
     # Define log directory and log files
     log_dir="nextcloud_logs"
     download_log="$log_dir/nextcloud_downloads.log"
     upload_log="$log_dir/nextcloud_uploads.log"
 
-    # Validate if the log directory and files exist
+    # Validate if the log directory exists
     if [ ! -d "$log_dir" ]; then
         echo
         echo -e "${red_high_intensity}The log directory '$log_dir' does not exist.${reset}"
@@ -607,49 +607,79 @@ search_files_and_folders() {
         return
     fi
 
-    # Check if log files exist and display their details
-    if [ ! -f "$download_log" ]; then
+    # Check if log files exist
+    if [ ! -f "$download_log" ] && [ ! -f "$upload_log" ]; then
         echo
-        echo -e "${red_high_intensity}The download log file '$download_log' does not exist.${reset}"
+        echo -e "${red_high_intensity}Neither the download log file '$download_log' nor the upload log file '$upload_log' exists.${reset}"
+        echo
+        read -p "Press enter to get back to the main menu: " enter
+        main_menu
+        return
     fi
 
-    if [ ! -f "$upload_log" ]; then
+    echo "-------------------------------------------------------------------------"
+    echo
+    echo -e "Select the log file to search in:"
+    echo
+    echo -e "1. Download log ($download_log)"
+    echo -e "2. Upload log ($upload_log)"
+    echo -e "3. Back to main menu"
+    echo
+
+    # Read user choice
+    read -p "Enter your choice (1, 2, or 3): " choice
+
+    case "$choice" in
+        1)
+            selected_log="$download_log"
+            ;;
+        2)
+            selected_log="$upload_log"
+            ;;
+        3)
+            main_menu
+            return
+            ;;
+        *)
+            echo
+            echo -e "${red_high_intensity}Invalid choice. Returning to main menu.${reset}"
+            echo
+            read -p "Press enter to return to search mode: " enter
+            search_in_log_files
+            return
+            ;;
+    esac
+
+    # Ensure the selected log file exists
+    if [ ! -f "$selected_log" ]; then
         echo
-        echo -e "${red_high_intensity}The upload log file '$upload_log' does not exist.${reset}"
+        echo -e "${red_high_intensity}The selected log file '$selected_log' does not exist.${reset}"
+        echo
+        read -p "Press enter to get back to the main menu: " enter
+        main_menu
+        return
     fi
 
-    # List contents of the log directory
+    # Proceed with the search
     echo
-    echo -e "Contents of the log directory '$log_dir':"
+    read -p "Enter the regular expression to search for in the log file: " regexp
     echo
-    ls -lha "$log_dir"
+    echo -e "Searching for entries matching '$regexp' in '$selected_log'..."
     echo
-    # Proceed with the search if the log directory and files are valid
-    read -p "Enter the regular expression to search for files and folders: " regexp
-    echo
-    echo -e "Searching for files and folders matching '$regexp' in $PWD..."
-    results=$(find "$PWD" -type f -o -type d | grep -E "$regexp")
+    results=$(grep -E "$regexp" "$selected_log")
 
     if [ -z "$results" ]; then
         echo
-        echo -e "${red_high_intensity}No files or folders found matching the regular expression '$regexp'.${reset}"
+        echo -e "${red_high_intensity}No entries found matching the regular expression '$regexp'.${reset}"
         echo
     else
         echo
-        echo -e "Files and folders found with details:"
-        while IFS= read -r item; do
-            if [ -d "$item" ]; then
-                echo -e "-------------------------------------------------------------------"
-                echo -e "Directory: $item"
-                du -sh "$item" | awk '{print $1 " " $2}'
-            elif [ -f "$item" ]; then
-                echo -e "-------------------------------------------------------------------"
-                echo -e "File: $item"
-                ls -lha "$item"
-            fi
-        done <<< "$results"
+        echo -e "Entries found in '$selected_log':"
+        echo -e "--------------------------------------------------------------"
+        echo "$results"
+        echo -e "--------------------------------------------------------------"
     fi
-    echo -e "--------------------------------------------------------------"
+
     read -p "Press enter to get back to the main menu: " enter
     main_menu
 }
@@ -772,7 +802,7 @@ handle_input_main_menu() {
                     echo
                     echo "Accessed option 9... "
                     echo
-                    search_logs
+                    search_in_log_files
                     read -p "Press enter to get back to main menu: " enter
                     ;;
                 9)
