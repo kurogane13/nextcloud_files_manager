@@ -1,240 +1,240 @@
 #!/bin/bash
 
-# ansi_codes: https://gist.github.com/JBlond/2fea43a3049b38287e5e9cefc87b2124
-# Terminal colors
-# Define colors for highlighting
-
+# ANSI color codes
 red="\033[31m"
 red_high_intensity="\033[0;91m"
 yellow="\033[33m"
-yellow_high_intensity="\e[0;93m"
-cyan="\e[4;36m"
-cyan_high_intensity="\e[0;96m"
-black="\e[0;30m	"
-cyan_high_background="\e[0;106m"
-blue_high_background="\e[0;104m"
-green_high_background="\e[0;102m"
-green_highlight="\033[1;32m"  # Green
-green_high_intensity="\e[0;92m"
-normal="\033[0m"        # Reset to default
+yellow_high_intensity="\033[0;93m"
+cyan="\033[4;36m"
+cyan_high_intensity="\033[0;96m"
+black="\033[0;30m"
+cyan_high_background="\033[0;106m"
+blue_high_background="\033[0;104m"
+green_high_background="\033[0;102m"
+green_highlight="\033[1;32m"
+green_high_intensity="\033[0;92m"
+normal="\033[0m"
 reset="\033[0m"
 
+# Default Nextcloud URL
 nextcloud_url="nextcloud.com"
 
+# Log directory and files
+log_dir="nextcloud_logs"
+download_log="$log_dir/nextcloud_downloads.log"
+upload_log="$log_dir/nextcloud_uploads.log"
+
+# Create the logs directory
+mkdir -p "$log_dir"
+
+# Function to set the Nextcloud URL
 set_nextcloud_url() {
     echo
     read -p "Enter the Nextcloud URL: " nextcloud_url
     echo
-    echo "Nextcloud URL set to: $nextcloud_url"
+    echo -e "Nextcloud URL set to: $nextcloud_url"
     echo
     read -p "Press enter to return to the main menu: " enter
     main_menu
 }
 
+# Function to show the current Nextcloud URL
 show_nextcloud_url() {
-    echo
-    echo "Current Nextcloud URL: $nextcloud_url"
+    echo -e "Current Nextcloud URL: $nextcloud_url"
     echo
     read -p "Press enter to return to the main menu: " enter
     main_menu
 }
 
+# Function to list files and folders
 list_folder_shares() {
     ls -lha
     echo "--------------------------------------------------------------"
-	echo -e "Files and folders found with details:"
-	echo
-	# Loop through each result
-	results=$(find "$PWD" -type f -o -type d)
-	while IFS= read -r item; do
-		if [ -d "$item" ]; then
-			# Use du -sh for directories to show only the size of the directory itself
-			echo -e "-------------------------------------------------------------------"
-			echo -e "Directory: $item"
-			du -sh "$item" | awk '{print $1 " " $2}'
-
-		elif [ -f "$item" ]; then
-			# Use ls -lha for files to show detailed info
-			echo -e "-------------------------------------------------------------------"
-			echo -e "File: $item"
-			ls -lha "$item"
-		fi
-	done <<< "$results"
-	echo -e "--------------------------------------------------------------"
-	read -p "Press enter to get back to the main menu: " enter
-	main_menu
+    echo -e "Files and folders found with details:"
+    echo
+    results=$(find "$PWD" -type f -o -type d)
+    while IFS= read -r item; do
+        if [ -d "$item" ]; then
+            echo -e "-------------------------------------------------------------------"
+            echo -e "Directory: $item"
+            du -sh "$item" | awk '{print $1 " " $2}'
+        elif [ -f "$item" ]; then
+            echo -e "-------------------------------------------------------------------"
+            echo -e "File: $item"
+            ls -lha "$item"
+        fi
+    done <<< "$results"
+    echo -e "--------------------------------------------------------------"
+    read -p "Press enter to get back to the main menu: " enter
+    main_menu
 }
 
+# Function to search files and folders
 search_files_and_folders() {
-    # Prompt the user for a regular expression
     echo
     read -p "Enter the regular expression to search for files and folders: " regexp
-
-    # Search for files and folders matching the regular expression
     echo
     echo -e "Searching for files and folders matching '$regexp' in $PWD..."
     results=$(find "$PWD" -type f -o -type d | grep -E "$regexp")
-
-    # Check if results were found
+    
     if [ -z "$results" ]; then
-        echo
         echo -e "${red_high_intensity}No files or folders found matching the regular expression '$regexp'${reset}."
-        echo
-        echo -e "--------------------------------------------------------------"
-		read -p "Press enter to get back to the main menu: " enter
-		main_menu
     else
         echo -e "Files and folders found with details:"
-        echo
-        # Loop through each result
         while IFS= read -r item; do
             if [ -d "$item" ]; then
-                # Use du -sh for directories to show only the size of the directory itself
                 echo -e "-------------------------------------------------------------------"
                 echo -e "Directory: $item"
                 du -sh "$item" | awk '{print $1 " " $2}'
-
             elif [ -f "$item" ]; then
-                # Use ls -lha for files to show detailed info
                 echo -e "-------------------------------------------------------------------"
                 echo -e "File: $item"
                 ls -lha "$item"
             fi
         done <<< "$results"
-		echo -e "--------------------------------------------------------------"
-		read -p "Press enter to get back to the main menu: " enter
-		main_menu
     fi
+    echo -e "--------------------------------------------------------------"
+    read -p "Press enter to get back to the main menu: " enter
+    main_menu
 }
 
+# Function to handle share links
 share_link() {
-
-    # Define the file path
-    share_link_file="share_link_file.txt"
-    echo
+    local share_link_file="share_link_file.txt"
     echo -e "Validating if the folder has a share link file..."
-	echo
-    # Check if the share link file already exists
     if [[ -f "$folder_share/$share_link_file" ]]; then
-        share_link=$(cat "$share_link_file")
-        echo
-        echo -e "Validation OK!. This folder already has a share link file: $share_link_file"
-        echo
+        share_link=$(cat "$folder_share/$share_link_file")
+        echo -e "Validation OK! This folder already has a share link file: $share_link_file"
     else
-        # Prompt for the share link URL
-        echo
         echo -e "${red_high_intensity}No share link URL file was found for this folder.${reset}"
-        echo
-        read -p "Provide your share link url, and press enter to proceed: " share_link
-
-        # Create the file and write the share link to it
+        read -p "Provide your share link URL, and press enter to proceed: " share_link
         echo -e "$share_link" > "$folder_share/$share_link_file"
     fi
-	
 }
 
+# Function to download content
 download_content() {
-    echo 
-    ls -lha
+    unset zip_filename
+    unset zip_file
+    unset share_link
+    unset share_link_file
+    unset share_id
+    unset download_url
+    unset corrected_url
+
     echo
+    ls -lha
     echo "---------------------------------------------------------------------"
-    
-    # Prompt user for input
-    read -p "Enter the folder share to download content to without '/' (e.g., nextcloud): " folder_share
+    read -p "Enter the folder share, you to download content to (without '/' (e.g., nextcloud)): " folder_share
+
     if [[ ! -d $folder_share ]]; then
         echo
         echo -e "${red_high_intensity}$folder_share not found in $PWD.${reset}"
         echo
         read -p "Press enter to provide an existing folder and/or subfolder: " enter
         download_content
+        return
     else
         echo
+        echo "Showing Folder content: "
+        echo
+        ls -lha $folder_share
+        echo
+        echo "-----------------------------------------------------------------------------------"
+        echo $folder_share" exists."
     fi
-    echo "You will be downloading content from nextcloud to local folder: $folder_share"
-    echo
-    echo "All the content will be downloaded in a zip file called nextcloud_download_content.zip with a datetime timestamp."
-    echo
 
-    # Validate if the share link file exists in the provided folder and read the link
-    share_link_file_path="$folder_share/share_link_file.txt"
+    local share_link_file_path="$folder_share/share_link_file.txt"
     if [[ -f "$share_link_file_path" ]]; then
         share_link=$(cat "$share_link_file_path")
-        echo "Validation OK! This folder already has a share link file: $share_link_file_path"
+        echo
+        echo -e "Validation OK! This folder already has a share link file: $share_link_file_path"
+        echo
     else
+        echo
         echo -e "${red_high_intensity}share_link_file.txt not found in $folder_share.${reset}"
         echo
-        read -p "Press enter to provide the share link: " share_link
+        read -p "Provide the share link URL, and press enter: " share_link
         echo "$share_link" > "$share_link_file_path"
     fi
 
+	download_url=$(echo "$share_link" | sed -r 's#(/download)+$#/download#')
+	datetimestamp=$(date +'%Y-%m-%d_%H-%M-%S')
+	zip_filename="nextcloud_download_content_$datetimestamp.zip"
+	zip_file="$folder_share/$zip_filename"
+
+	# Construct the corrected URL for download
+	corrected_url="${share_link}/download/${zip_filename}"
+	
     echo "------------------------------------------------------------------------------------------"
     echo
-    read -p "Press enter to proceed to download content to local share folder: $folder_share: "
-
-    # Clean and prepare the share link URL
-    download_url=$(echo "$share_link" | sed -r 's#(/download)+$#/download#')
-    datetimestamp=$(date +'%Y-%m-%d_%H-%M-%S')
-    zip_filename="nextcloud_download_content_$datetimestamp.zip"
-    zip_file="$folder_share/$zip_filename"
-    
-    # Construct the corrected URL for download
-    corrected_url="${download_url}/download/${zip_filename}"
-    corrected_url=$(echo "$corrected_url" | sed 's|/public.php/webdav//|/public.php/webdav/|g')
-    
+    echo "You will download content from: $corrected_url"
     echo
-    timestamp=$(date +'%Y-%m-%d_%H:%M:%S')
-    echo "Download executed at: $timestamp"
-    echo 
+    echo "Destination: local share folder: $folder_share/$zip_filename"
+    echo
+    echo "------------------------------------------------------------------------------------------"
+    read -p "Press enter to proceed to download now: " enter
+    echo
     echo "Downloading content from $corrected_url to $zip_file..."
-    echo
     
-    # Perform the download using curl
+    # Start the download
+    start_time=$(date +'%Y-%m-%d %H:%M:%S')
+    start_time_seconds=$(date -d "$start_time" +%s)
     curl -L -v "$corrected_url" -o "$zip_file"
-    echo
-    timestamp=$(date +'%Y-%m-%d_%H:%M:%S')
-    echo "Download ended at: $timestamp"
-    echo 
+    
+    end_time=$(date +'%Y-%m-%d %H:%M:%S')
+    end_time_seconds=$(date -d "$end_time" +%s)
+    elapsed_time=$((end_time_seconds - start_time_seconds))
+    
+    # Convert elapsed time into hours, minutes, and seconds
+    hours=$((elapsed_time / 3600))
+    minutes=$(( (elapsed_time % 3600) / 60 ))
+    seconds=$((elapsed_time % 60))
+    
+    # Format elapsed time
+    formatted_elapsed_time=$(printf "%02d:%02d:%02d" $hours $minutes $seconds)
+	
+	echo "---------------------------------------------------------------------------------"
+	echo
+	echo " Curl operation timestamps for: curl -L -v $corrected_url -o $zip_file "
+	echo
+	echo "Start Time: $start_time"
+	echo "End Time: $end_time"
+	echo "Elapsed Time: $formatted_elapsed_time"
+	echo
 
-    # Check if the download was successful
     if [[ $? -eq 0 ]]; then
-        echo "--------------------------------------------------------------"
-        ls -lha "$zip_file"
-        echo
-        echo "Unzipping $zip_file..."
-        echo
+        echo "--------------------------------------------------------------" >> "$download_log"
+        echo -e "[$start_time] Downloaded content to $zip_file" >> "$download_log"
+        ls -lha "$zip_file" >> "$download_log"
+        echo -e "Unzipping $zip_file..." >> "$download_log"
+        unzip -o "$zip_file" -d "$folder_share"
         
-        # Unzip the file
-        unzip "$zip_file" -d "$folder_share"
-        
-        # Check if unzip was successful
         if [[ $? -eq 0 ]]; then
-            echo
-            rm -rf $zip_file
-            echo "Listing all files in: $folder_share"
-            ls -lha "$folder_share"
-            echo "--------------------------------------------------------------"
-
+            rm -f "$zip_file"
+            echo -e "[$end_time] Successfully unzipped $zip_file" >> "$download_log"
+            echo -e "Listing all files in: $folder_share" >> "$download_log"
+            ls -lha "$folder_share" >> "$download_log"
+            echo "---------------------------------------------------------------------------" >> "$download_log"
+			echo -e "[$start_time] - Downloading $zip_file to "$folder_share >> "$download_log"
+			echo -e "[$end_time] - Ended download of $zip_file to "$folder_share >> "$download_log"
+			echo -e "[$formatted_elapsed_time] - Elapsed time to download $zip_file to" $folder_share >> "$download_log"
+            
         else
             echo -e "${red_high_intensity}Unzip failed. The file may be corrupted.${reset}"
-            echo
-            read -p "Press enter to return to the main menu: " enter
-            echo
-            main_menu
+            echo -e "[$end_time] Unzip failed for $zip_file" >> "$download_log"
         fi
     else
         echo -e "${red_high_intensity}Download failed. Please check the share link URL, or your connection.${reset}"
-        read -p "Press enter to return to the main menu: " enter
-        echo
-        main_menu
+        echo -e "[$end_time] Download failed for $corrected_url" >> "$download_log"
     fi
     echo
     read -p "Press enter to get back to the main menu: " enter
     main_menu
 }
 
-
+# Function to upload content
 upload_content() {
-    # Ask the user if they want to upload a file or a folder
     echo "Do you want to upload a file or a folder?"
     echo
     echo "1) File"
@@ -242,217 +242,427 @@ upload_content() {
     echo "<--- b - Back to Main menu"
     echo
     read -p "Choose option 1, 2 or b to return to main menu: " choice
-
-    if [[ $choice -eq 1 ]]; then
-        # Ask for the full path to the file
-        echo
-        read -p "Enter the full path to the file (Example: My_folder/sub_folder/file.json): " filepath
-        filename=$(basename "$filepath")
-        
-        if [[ ! -f $filepath ]];then
-            echo
-            echo -e "${red_high_intensity}ERROR: $filepath not found${reset}"
-            echo
-            read -p "Press enter to return to the main menu: " enter
-            echo
-            main_menu
-            
-        else
-            echo
-            echo "Provided $filepath is valid"
-            echo 
-            ls -lha $filepath
-        fi
-
-        # Define the file path for the share link file
-        share_link_file="$(dirname "$filepath")/share_link_upload.txt"
-
-        # Check if the share link file exists
-        if [[ ! -f "$share_link_file" ]]; then
-            echo
-            echo -e "${red_high_intensity}Share link file not found. Please provide the share link.${reset}"
-            echo
-            read -p "Provide the share link URL, to proceed with the upload of $filepath: " share_link
-            echo "$share_link" > "$share_link_file"
-        else
-            share_link=$(<"$share_link_file")
-        fi
-
-        share_id=$(echo "$share_link" | sed -n 's#https://nc.cloudlinux.com/s/\([^/]*\)$#\1#p')
-        echo
-        echo "-----------------------------------------------------------------------------------------"
-        echo
-        read -p "Press enter to proceed to the upload of $filepath to Cloudlinx nextcloud share: " enter
-        echo
-
-        # Check if the file exists
-        if [[ -f "$filepath" ]]; then
-            # Zip the file
-            temp_zip="${filepath}.zip"
-            echo "Compressing $filepath to $temp_zip..."
-            zip -j "$temp_zip" "$filepath"
-            
-            corrected_url="https://nc.cloudlinux.com/public.php/webdav/$folder_share/$filename"
-            corrected_url2=$(echo "$corrected_url" | sed 's|/webdav//|/webdav/|g')
-            # Perform the upload using curl
-			echo
-            echo "Uploading $temp_zip to $share_link..."
-            echo
-            echo
-            timestamp=$(date +'%Y-%m-%d_%H:%M:%S')
-            echo "Upload executed at: $timestamp"
-            echo 
-            curl -v -k -T "$temp_zip" -u "$share_id:" -H 'X-Requested-With: XMLHttpRequest' $corrected_url2
-            echo
-            timestamp=$(date +'%Y-%m-%d_%H:%M:%S')
-            echo "Upload ended at: $timestamp"
-            echo 
-
-            if [[ $? -eq 0 ]]; then
-                echo
-                echo "File $filename uploaded successfully."
-                echo
-                read -p "Press enter to return to the main menu: " enter
-                echo
-                main_menu
-            else
-                echo
-                echo -e "${red_high_intensity}Failed to upload file $filename.${reset}"
-                echo
-                read -p "Press enter to return to the main menu: " enter
-                echo
-                main_menu
-            fi
-
-            # Clean up the temporary zip file
-            rm -f "$temp_zip"
-        else
-            echo
-            echo -e "${red_high_intensity}File $filepath does not exist.${reset}"
-            echo
-            read -p "Press enter to return to the main menu: " enter
-            echo
-            main_menu
-        fi
-    elif [[ $choice -eq 2 ]]; then
-        # Ask for the full path to the folder
-        echo
-        read -p "Enter the full path to the folder you want to upload to Nextcloud without the last '/' (Example: /root/My_folder): " folder_share
-        foldername=$(basename "$folder_share")
-        temp_zip="$folder_share.zip"
-        
-        if [[ ! -d $folder_share ]];then
-            echo
-            echo -e "${red_high_intensity}ERROR: Folder share: $folder_share not found${reset}"
-            echo
-            read -p "Press enter to return to the main menu: " enter
-            echo
-            main_menu
-        else
-            echo
-            echo "Provided $folder_share is valid"
-            echo 
-            ls -lha $folder_share
-        fi
-
-        # Define the file path for the share link file
-        share_link_file="$(dirname "$folder_share")/share_link_upload.txt"
-
-        # Check if the share link file exists
-        if [[ ! -f "$share_link_file" ]]; then
-            echo
-            echo -e "${red_high_intensity}Share link file not found. Please provide the share link.${reset}"
-            echo
-            read -p "Provide the share link URL to proceed with the upload of $folder_share: " share_link
-            echo "$share_link" > "$share_link_file"
-        else
-            share_link=$(<"$share_link_file")
-        fi
-
-        share_id=$(echo "$share_link" | sed -n 's#https://nc.cloudlinux.com/s/\([^/]*\)$#\1#p')
-        
-        echo "-----------------------------------------------------------------------------------------"
-        echo
-        read -p "Press enter to proceed to the upload of $folder_share to Cloudlinx nextcloud share: " enter
-        echo
-
-        # Check if the folder exists
-        if [[ -d "$folder_share" ]]; then
-            # Compress the folder using zip
-            echo
-            echo "Compressing $folder_share to $temp_zip..."
-            zip -r "$temp_zip" "$folder_share"
-
-            corrected_url="https://nc.cloudlinux.com/public.php/webdav/$folder_share/$filename"
-            corrected_url2=$(echo "$corrected_url" | sed 's|/webdav//|/webdav/|g')
-            # Perform the upload using curl
-            echo 
-            echo "Uploading $temp_zip to $share_link..."
-            echo
-            timestamp=$(date +'%Y-%m-%d_%H:%M:%S')
-            echo "Upload executed at: $timestamp"
-            echo
-            curl -v -k -T "$temp_zip" -u "$share_id:" -H 'X-Requested-With: XMLHttpRequest' $corrected_url2
-            echo
-            timestamp=$(date +'%Y-%m-%d_%H:%M:%S')
-            echo "Upload ended at: $timestamp"
-            echo 
-
-            if [[ $? -eq 0 ]]; then
-                echo
-                echo "Folder $foldername uploaded successfully."
-                echo
-                read -p "Press enter to return to the main menu: " enter
-                echo
-                main_menu
-            else
-                echo
-                echo -e "${red_high_intensity}Failed to upload folder $foldername.${reset}"
-                echo
-                read -p "Press enter to return to the main menu: " enter
-                echo
-                main_menu
-            fi
-
-            # Clean up the temporary zip file
-            rm -f "$temp_zip"
-        else
-            echo
-            echo -e "${red_high_intensity}Folder $folder_share does not exist.${reset}"
-            echo
-            read -p "Press enter to return to the main menu: " enter
-            echo
-            main_menu
-        fi
     
-    elif [[ $choice == "b" ]]; then
+	unset temp_zip
+	unset share_link
+	unset share_link_file
+	unset share_id
+	unset upload_corrected_file_url
+	
+	unset folderpath
+	unset foldername
+	unset temp_zip
+	unset share_link
+	unset share_link_file
+	unset share_id
+	unset upload_corrected_folder_url
+
+    case $choice in
+        1)
+            
+            echo
+            read -p "Enter the full path to the file (Example: My_folder/sub_folder/file.json): " filepath
+
+            if [[ ! -f $filepath ]]; then
+                echo
+                echo -e "${red_high_intensity}ERROR: $filepath not found${reset}"
+                echo
+                read -p "Press enter to return to the main menu: " enter
+                main_menu
+            else
+                echo
+                ls -lha $filepath
+                echo
+                echo "---------------------------------------------------------------------"        
+                # Define the file path for the share link file
+                share_link_file="$(dirname "$filepath")/share_link_upload.txt"
+
+                # Check if the share link file exists
+                if [[ ! -f "$share_link_file" ]]; then
+                    echo
+                    echo -e "${red_high_intensity}Share link file not found. Please provide the share link.${reset}"
+                    echo
+                    read -p "Provide the share link URL to proceed with the upload of $filepath: " share_link
+                    echo "$share_link" > "$share_link_file"
+                else
+                    share_link=$(<"$share_link_file")
+                fi
+
+                share_id="${share_link##*/}" # Remove everything before the last /
+
+                filename=$(basename "$filepath")
+                echo -e "Provided $filepath is valid"
+                echo
+                share_link_file="$(dirname "$filepath")/share_link_upload.txt"
+                temp_zip="${filepath}.zip"
+                echo
+                echo "Compressing $filepath to $temp_zip..."
+                echo
+                zip -r "$temp_zip" "$filepath"
+
+				# Construct the upload URL
+				upload_corrected_file_url="https://${nextcloud_url}/public.php/webdav/${filename}"
+
+				# Remove any extra slashes
+				upload_corrected_file_url=$(echo "$upload_corrected_file_url" | sed 's|/public.php/webdav//|/public.php/webdav/|g')
+				upload_corrected_file_url=$(echo "$upload_corrected_file_url" | sed 's|https://https://|https://|g')
+				upload_corrected_file_url=$(echo "$upload_corrected_file_url" | sed 's|//public.php/|/public.php/|g')
+                upload_url=$(echo "$share_link" | sed -r 's#(/download)+$#/upload#')
+
+                echo
+                echo "------------------------------------------------------------------------------------------------------"
+                echo
+                echo "Upload filename: $filepath"
+                echo
+                echo "Destination url: $upload_corrected_file_url."
+                echo
+                echo "------------------------------------------------------------------------------------------------------"
+                read -p "Press enter to proceed to upload: " enter
+                echo
+                echo "Uploading $filepath to $upload_url..."
+                echo
+                start_time=$(date +'%Y-%m-%d %H:%M:%S')
+                start_time_seconds=$(date -d "$start_time" +%s)
+                echo
+                echo "Upload started at: $start_time"
+                echo
+
+                # UPLOAD FILE CURL CALL
+                curl_temp_log="curl_temp_log.log"
+                touch $curl_temp_log
+                curl -v -k -T "$temp_zip" -u "$share_id:" -H 'X-Requested-With: XMLHttpRequest' "$upload_corrected_file_url" | tee -a "$curl_temp_log"
+                
+                # Check the log for a successful 201 response
+                if grep -q "< HTTP/2 201" "$curl_temp_log"; then
+                    echo
+                    echo "Upload successful. Data was uploaded successfully."
+                    echo "Upload successful. Data was uploaded successfully." >> "$upload_log"
+                elif grep -q "error" "$curl_temp_log"; then
+                    echo
+                    echo "Upload failed. There were errors during the upload process." 
+                    echo "Upload failed. There were errors during the upload process." >> "$upload_log"
+                    echo "Check the log for more details:"
+                    echo "Check the log for more details:" >> "$upload_log"
+                    echo
+                    tail -n 50 "$curl_temp_log"
+                    tail -n 50 "$curl_temp_log" >> "$upload_log"
+                    echo "------------------------------------------------------------------------"
+                    echo "------------------------------------------------------------------------" >> "$upload_log"
+                    echo
+                    read -p "Press enter to return to the main menu: " enter
+                    main_menu
+                fi
+                
+                end_time=$(date +'%Y-%m-%d %H:%M:%S')
+                end_time_seconds=$(date -d "$end_time" +%s)
+                echo
+                echo "Upload ended at: $end_time"
+                echo
+                elapsed_time=$((end_time_seconds - start_time_seconds))
+                echo
+                # Calculate elapsed time in seconds
+                elapsed_seconds=$((end_time_seconds - start_time_seconds))
+                
+                # Convert elapsed time into hours, minutes, and seconds
+                hours=$((elapsed_seconds / 3600))
+                minutes=$(( (elapsed_seconds % 3600) / 60 ))
+                seconds=$((elapsed_seconds % 60))
+                
+                # Format elapsed time
+                formatted_elapsed_time=$(printf "%02d:%02d:%02d" $hours $minutes $seconds)
+                
+                echo
+                echo "---------------------------------------------------------------------------------"
+                echo
+                echo "Curl operation timestamps for: curl -v -k -T $temp_zip -u $share_id: -H 'X-Requested-With: XMLHttpRequest' $upload_corrected_file_url"  >> "$upload_log"
+                echo
+                echo "Start Time: $start_time"
+                echo "End Time: $end_time"
+                echo "Elapsed Time: $formatted_elapsed_time"
+                echo
+                rm -rf $temp_zip
+                rm -rf $filepath.zip
+                rm -rf $curl_temp_log
+                
+                if [[ $? -eq 0 ]]; then
+                    echo
+                    echo -e "[$start_time] - Uploading $temp_zip to "$upload_corrected_file_url >> "$upload_log"
+                    echo -e "[$end_time] - Ended upload of $temp_zip to "$upload_corrected_file_url >> "$upload_log"
+                    echo -e "[$formatted_elapsed_time] - Elapsed time to upload $temp_zip to "$upload_corrected_file_url >> "$upload_log"
+                    echo -e "${green_high_intensity}File uploaded successfully!${reset}" >> "$upload_log"
+                else
+                    echo
+                    echo -e "${red_high_intensity}Upload failed. Please check the share link URL, or your connection.${reset}" >> "$upload_log"
+                    echo
+                    echo -e "[$end_time] Upload failed for "$upload_corrected_file_url >> "$upload_log"
+                    echo
+                fi
+            fi
+            ;;
+        2)
+
+            echo
+            read -p "Enter the full path to the folder (without the '/'. e.g., /path/to/folder): " folderpath
+
+            if [[ ! -d $folderpath ]]; then
+                echo
+                echo -e "${red_high_intensity}ERROR: $folderpath not found${reset}"
+                echo
+                read -p "Press enter to return to the main menu: " enter
+                main_menu
+            else
+                foldername=$(basename "$folderpath")
+                temp_zip="$folderpath.zip"
+                
+                echo
+                ls -lha "$folderpath/"
+                echo
+                echo "---------------------------------------------------------------------"    
+                echo
+                echo -e "Compressing folder $folderpath to $temp_zip"
+                echo
+                zip -r "$temp_zip" "$folderpath"
+                
+                # Define the file path for the share link file
+                share_link_file="$(dirname "$folderpath")/share_link_upload.txt"
+
+                # Check if the share link file exists
+                if [[ ! -f "$share_link_file" ]]; then
+                    echo
+                    echo -e "${red_high_intensity}Share link file not found. Please provide the share link.${reset}"
+                    echo
+                    read -p "Provide the share link URL to proceed with the upload of $folderpath: " share_link
+                    echo "$share_link" > "$share_link_file"
+                else
+                    share_link=$(<"$share_link_file")
+                fi
+                
+                share_id="${share_link##*/}" # Remove everything before the last /
+                
+				# Construct the upload URL
+				upload_corrected_folder_url="https://${nextcloud_url}/public.php/webdav/${foldername}"
+
+				# Remove any extra slashes
+				upload_corrected_folder_url=$(echo "$upload_corrected_folder_url" | sed 's|/public.php/webdav//|/public.php/webdav/|g')
+	            upload_corrected_folder_url=$(echo "$upload_corrected_folder_url" | sed 's|https://https://|https://|g')
+				upload_corrected_folder_url=$(echo "$upload_corrected_folder_url" | sed 's|//public.php/|/public.php/|g')
+                
+                nextcloud_url=$(echo "$share_link" | sed -E 's|(https://[^/]+/).*|\1|') # Extract the base URL
+                
+                echo
+                echo "You will be uploading all content from: $folderpath"
+                echo
+                echo "Destination URL: $upload_corrected_folder_url"
+                echo
+                echo "---------------------------------------------------------------------------------"
+                read -p "Press enter to proceed to upload: " enter
+                echo
+                
+                echo -e "Uploading $temp_zip to $upload_url..."
+                
+                start_time=$(date +'%Y-%m-%d %H:%M:%S')
+                start_time_seconds=$(date -d "$start_time" +%s)
+                echo
+                echo "Upload started at: $start_time"
+                echo
+                
+                curl_temp_log="curl_temp_log.log"
+                touch $curl_temp_log
+                # UPLOAD FOLDER CURL CALL
+                curl -v -k -T $temp_zip -u "$share_id:" -H 'X-Requested-With: XMLHttpRequest' $upload_corrected_folder_url  | tee -a "$curl_temp_log"
+                
+                # Check the log for a successful 201 response
+                if grep -q "< HTTP/2 201" "$curl_temp_log"; then
+                    echo
+                    echo "Upload successful. Data was uploaded successfully."
+                    echo "Upload successful. Data was uploaded successfully." >> "$upload_log"
+                elif grep -q "error" "$curl_temp_log"; then
+                    echo
+                    echo "Upload failed. There were errors during the upload process." 
+                    echo "Upload failed. There were errors during the upload process." >> "$upload_log"
+                    echo "Check the log for more details:"
+                    echo "Check the log for more details:" >> "$upload_log"
+                    echo
+                    tail -n 50 "$curl_temp_log"
+                    tail -n 50 "$curl_temp_log" >> "$upload_log"
+                    echo "------------------------------------------------------------------------"
+                    echo "------------------------------------------------------------------------" >> "$upload_log"
+                    echo
+                    read -p "Press enter to return to the main menu: " enter
+                    main_menu
+                fi
+                
+                end_time=$(date +'%Y-%m-%d %H:%M:%S')
+                end_time_seconds=$(date -d "$end_time" +%s)
+                echo
+                echo "Upload ended at: $end_time"
+                echo
+                elapsed_time=$((end_time_seconds - start_time_seconds))
+                echo
+                # Calculate elapsed time in seconds
+                elapsed_seconds=$((end_time_seconds - start_time_seconds))
+                
+                # Convert elapsed time into hours, minutes, and seconds
+                hours=$((elapsed_seconds / 3600))
+                minutes=$(( (elapsed_seconds % 3600) / 60 ))
+                seconds=$((elapsed_seconds % 60))
+                
+                # Format elapsed time
+                formatted_elapsed_time=$(printf "%02d:%02d:%02d" $hours $minutes $seconds)
+                
+                echo
+                echo "---------------------------------------------------------------------------------"
+                echo
+                echo "Curl operation timestamps for: curl -v -k -T $temp_zip -u $share_id: -H 'X-Requested-With: XMLHttpRequest' $upload_corrected_folder_url"  >> "$upload_log"
+                echo
+                echo "Start Time: $start_time"
+                echo "End Time: $end_time"
+                echo "Elapsed Time: $formatted_elapsed_time"
+                echo
+                rm -rf $temp_zip
+                rm -rf $filepath.zip
+                rm -rf $curl_temp_log
+                
+                if [[ $? -eq 0 ]]; then
+                    echo
+                    echo -e "[$start_time] - Uploading $temp_zip to "$upload_corrected_folder_url >> "$upload_log"
+                    echo -e "[$end_time] - Ended upload of $temp_zip to "$upload_corrected_folder_url >> "$upload_log"
+                    echo -e "[$formatted_elapsed_time] - Elapsed time to upload $temp_zip to "$upload_corrected_folder_url >> "$upload_log"
+                    echo -e "${green_high_intensity}File uploaded successfully!${reset}" >> "$upload_log"
+                else
+                    echo
+                    echo -e "${red_high_intensity}Upload failed. Please check the share link URL, or your connection.${reset}" >> "$upload_log"
+                    echo
+                    echo -e "[$end_time] Upload failed for "$upload_corrected_folder_url >> "$upload_log"
+                    echo
+                fi
+            fi
+            ;;
+        b)
+            main_menu
+            ;;
+        *)
+            echo
+            echo "Invalid option. Please choose 1, 2 or b."
+            upload_content
+            ;;
+    esac
+}
+
+
+# Function to view download log
+view_download_log() {
+	echo
+    echo -e "Reading the download log file: $download_log"
+    if [[ -f $download_log ]]; then
         echo
-        read -p "Press Enter to return to the main menu..."
-        main_menu
+        echo "BELOW THIS LINE STARTS THE OUTPUT OF: $download_log"
+        echo "------------------------------------------------------------------------------"
+        cat "$download_log"
+        echo "------------------------------------------------------------------------------"
+        echo "ABOVE THIS LINE ENDS THE OUTPUT OF: $download_log"
     else
         echo
-        echo -e "${red_high_intensity}Invalid choice. Please select 1 for file or 2 for folder, or b, to go back to main menu.${reset}"
-        #${red_high_intensity}Invalid option. Please choose a valid option.${reset}
-        echo
-        read -p "Press Enter to return to the File and Folder menu: "
-        echo
-        upload_content
+        echo -e "${red_high_intensity}Log file $download_log does not exist.${reset}"
     fi
     echo
-    read -p "Press Enter to return to the main menu..."
+    read -p "Press enter to return to the main menu: " enter
     main_menu
 }
 
+# Function to view upload log
+view_upload_log() {
+	echo
+    echo -e "Reading the upload log file: $upload_log"
+    if [[ -f $upload_log ]]; then
+        echo
+        echo "BELOW THIS LINE STARTS THE OUTPUT OF: $upload_log"
+        echo "------------------------------------------------------------------------------"
+        cat "$upload_log"
+        echo "------------------------------------------------------------------------------"
+        echo "ABOVE THIS LINE ENDS THE OUTPUT OF: $upload_log"
+    else
+        echo
+        echo -e "${red_high_intensity}Log file $upload_log does not exist.${reset}"
+    fi
+    echo
+    read -p "Press enter to return to the main menu: " enter
+    main_menu
+}
+
+# Function to search files and folders
+search_files_and_folders() {
+    # Define log directory and log files
+    log_dir="nextcloud_logs"
+    download_log="$log_dir/nextcloud_downloads.log"
+    upload_log="$log_dir/nextcloud_uploads.log"
+
+    # Validate if the log directory and files exist
+    if [ ! -d "$log_dir" ]; then
+        echo
+        echo -e "${red_high_intensity}The log directory '$log_dir' does not exist.${reset}"
+        echo
+        read -p "Press enter to get back to the main menu: " enter
+        main_menu
+        return
+    fi
+
+    # Check if log files exist and display their details
+    if [ ! -f "$download_log" ]; then
+        echo
+        echo -e "${red_high_intensity}The download log file '$download_log' does not exist.${reset}"
+    fi
+
+    if [ ! -f "$upload_log" ]; then
+        echo
+        echo -e "${red_high_intensity}The upload log file '$upload_log' does not exist.${reset}"
+    fi
+
+    # List contents of the log directory
+    echo
+    echo -e "Contents of the log directory '$log_dir':"
+    echo
+    ls -lha "$log_dir"
+    echo
+    # Proceed with the search if the log directory and files are valid
+    read -p "Enter the regular expression to search for files and folders: " regexp
+    echo
+    echo -e "Searching for files and folders matching '$regexp' in $PWD..."
+    results=$(find "$PWD" -type f -o -type d | grep -E "$regexp")
+
+    if [ -z "$results" ]; then
+        echo
+        echo -e "${red_high_intensity}No files or folders found matching the regular expression '$regexp'.${reset}"
+        echo
+    else
+        echo
+        echo -e "Files and folders found with details:"
+        while IFS= read -r item; do
+            if [ -d "$item" ]; then
+                echo -e "-------------------------------------------------------------------"
+                echo -e "Directory: $item"
+                du -sh "$item" | awk '{print $1 " " $2}'
+            elif [ -f "$item" ]; then
+                echo -e "-------------------------------------------------------------------"
+                echo -e "File: $item"
+                ls -lha "$item"
+            fi
+        done <<< "$results"
+    fi
+    echo -e "--------------------------------------------------------------"
+    read -p "Press enter to get back to the main menu: " enter
+    main_menu
+}
 
 # Array of options
 options=(
 "####################### *** FILE SHARES MANAGER *** ###########################"
-"                                                                     "
-"                    Today is:                                        "
-"_____________________________________________________________________"
+"                                                                               "
+"                    Today is:                                                  "
+"_______________________________________________________________________________"
 "*****************************| NEXTCLOUD SHARES |******************************"
-"**************************| Nextcloud File Manager |***************************"
-"_____________________________________________________________________"
+"************************* | Nextcloud File Manager |***************************"
+"_______________________________________________________________________________"
 "                                                               "
 "1. List all folders and files in $PWD                          "
 "2. Search for files and folders in $PWD                        "
@@ -460,8 +670,11 @@ options=(
 "4. Show Nextcloud URL                                          "
 "5. Download content                                            "
 "6. Upload content                                              "
-"7. Exit                                                        " 
-"__________________________________________________             "
+"7. View Downloads log                                          "
+"8. View Uploads log                                            "
+"9. Search regular expressions in log files                     "
+"10. Exit                                                       " 
+"_______________________________________________________________________________"
 " "
 "SELECT AN OPTION BY USING UP AND DOWN ARROWS AND PRESSING ENTER"
 )
@@ -543,6 +756,27 @@ handle_input_main_menu() {
                     ;;
                 6)
                     echo
+                    echo "Accessed option 7... "
+                    echo
+                    view_download_log
+                    read -p "Press enter to get back to main menu: " enter
+                    ;;
+                7)
+                    echo
+                    echo "Accessed option 8... "
+                    echo
+                    view_upload_log
+                    read -p "Press enter to get back to main menu: " enter
+                    ;;
+                8)
+                    echo
+                    echo "Accessed option 9... "
+                    echo
+                    search_logs
+                    read -p "Press enter to get back to main menu: " enter
+                    ;;
+                9)
+                    echo
                     echo "Exiting program... "
                     echo
                     exit 0
@@ -560,8 +794,8 @@ handle_input_main_menu() {
     # Ensure selected_index stays within bounds
     if [ $selected_index -lt 8 ]; then
         selected_index=8
-    elif [ $selected_index -ge 15 ]; then
-        selected_index=14
+    elif [ $selected_index -ge 18 ]; then
+        selected_index=8
     fi
 }
 
